@@ -64,11 +64,15 @@ html {
     overflow: hidden;
     padding: 12px;
     align-items: center;
+    justify-content: center;
+    display: flex;
   }
   
   .screen.game-screen {
     padding: 12px 12px 60px 12px;
     align-items: center;
+    justify-content: center;
+    display: flex;
   }
 }
 
@@ -80,11 +84,15 @@ html {
 
 @media (max-width: 600px) {
   .container {
-    height: 100%;
-    max-height: 100%;
+    max-width: 100%;
+    max-height: calc(100dvh - 24px);
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
+    margin: auto 0;
+    width: 100%;
+    align-self: center;
+    flex-shrink: 1;
   }
 }
 
@@ -926,11 +934,6 @@ html {
     font-size: 8px;
   }
 
-  .container {
-    max-width: 100%;
-    margin-top: 0;
-  }
-
   .location-grid {
     grid-template-columns: 1fr;
   }
@@ -943,7 +946,6 @@ html {
 
   .terminal-box {
     padding: 20px 14px;
-    max-height: calc(100dvh - 140px);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
