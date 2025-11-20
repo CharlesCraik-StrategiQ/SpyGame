@@ -1,0 +1,197 @@
+{
+  "locations": [
+    {
+      "name": "Casino",
+      "questions": [
+        "How often do you see people winning big here?",
+        "What's the dress code like for guests?",
+        "What kind of noises do you hear the most around you?"
+      ]
+    },
+    {
+      "name": "Traveling Circus",
+      "questions": [
+        "How long does it usually take us to set everything up?",
+        "What kind of animals do you see around?",
+        "What do you think is the most dangerous act here?"
+      ]
+    },
+    {
+      "name": "Pirate Ship",
+      "questions": [
+        "How often do we encounter other ships?",
+        "What's the captain's attitude like?",
+        "What's the hardest part of your daily tasks?"
+      ]
+    },
+    {
+      "name": "Space Station",
+      "questions": [
+        "How do you handle your meals here?",
+        "What's the view like during your shift?",
+        "How often do we communicate with Earth?"
+      ]
+    },
+    {
+      "name": "Airport Terminal",
+      "questions": [
+        "How long are the lines today?",
+        "What announcements do you hear often?",
+        "Do you prefer working near arrivals or departures?"
+      ]
+    },
+    {
+      "name": "Hospital",
+      "questions": [
+        "How do you stay calm during busy hours?",
+        "What's the most common thing you see people doing?",
+        "Which department is the loudest here?"
+      ]
+    },
+    {
+      "name": "University Campus",
+      "questions": [
+        "What's your favorite spot to relax between classes?",
+        "How busy is the place right now?",
+        "What type of events are usually happening here?"
+      ]
+    },
+    {
+      "name": "Luxury Hotel",
+      "questions": [
+        "What's the most common request guests make?",
+        "How strict is the staff about appearance?",
+        "What part of the building do you spend the most time in?"
+      ]
+    },
+    {
+      "name": "Beach Resort",
+      "questions": [
+        "How's the weather affecting work today?",
+        "What's the most popular activity here?",
+        "What do you usually hear from tourists?"
+      ]
+    },
+    {
+      "name": "Submarine",
+      "questions": [
+        "What's the biggest challenge of working here?",
+        "How often do we check the equipment?",
+        "What's the sleeping situation like?"
+      ]
+    },
+    {
+      "name": "Train Station",
+      "questions": [
+        "Which platform do you end up near most often?",
+        "How busy does it get at this hour?",
+        "What's the most common announcement you hear?"
+      ]
+    },
+    {
+      "name": "Medieval Castle",
+      "questions": [
+        "What's the coldest part of this place?",
+        "What's your main responsibility here?",
+        "Who do we usually see passing through?"
+      ]
+    },
+    {
+      "name": "Secret Laboratory",
+      "questions": [
+        "What's the most important safety rule here?",
+        "How often do experiments go wrong?",
+        "What's the most interesting tech you've seen around?"
+      ]
+    },
+    {
+      "name": "Amusement Park",
+      "questions": [
+        "What ride has the longest line?",
+        "How do you deal with all the noise?",
+        "What kind of guests do you see the most?"
+      ]
+    },
+    {
+      "name": "Restaurant Kitchen",
+      "questions": [
+        "What's the most stressful time of day?",
+        "Which dish is the hardest to prepare?",
+        "What's the temperature like back here?"
+      ]
+    },
+    {
+      "name": "Movie Set",
+      "questions": [
+        "How long do scenes usually take to shoot?",
+        "What's the most common thing you hear people shouting?",
+        "What's the biggest piece of equipment you've seen today?"
+      ]
+    },
+    {
+      "name": "Art Museum",
+      "questions": [
+        "Which section gets the most visitors?",
+        "How strict are the rules on touching things?",
+        "What's the lighting like in your area?"
+      ]
+    },
+    {
+      "name": "Football Stadium",
+      "questions": [
+        "How loud does it usually get here?",
+        "What's the crowd doing right now?",
+        "Where do you usually stand during events?"
+      ]
+    },
+    {
+      "name": "Shopping Mall",
+      "questions": [
+        "What's the busiest time of day here?",
+        "What kind of stores do you walk past most?",
+        "Where do you usually find the longest lines?"
+      ]
+    },
+    {
+      "name": "Nightclub",
+      "questions": [
+        "How loud is it right now?",
+        "What's the lighting like?",
+        "What's the most common drink people order?"
+      ]
+    },
+    {
+      "name": "Ski Lodge",
+      "questions": [
+        "How's the weather outside?",
+        "What gear do people usually leave lying around?",
+        "Which part of the lodge is warmest?"
+      ]
+    },
+    {
+      "name": "Construction Site",
+      "questions": [
+        "What's the noisiest part of the job?",
+        "What safety gear do you use the most?",
+        "What's being worked on today?"
+      ]
+    },
+    {
+      "name": "Jungle Expedition Camp",
+      "questions": [
+        "What kind of wildlife have you seen today?",
+        "How do you deal with the heat?",
+        "What's the hardest part of setting up camp?"
+      ]
+    },
+    {
+      "name": "Police Station",
+      "questions": [
+        "How busy does it get during your shift?",
+        "What's the most common thing people come in for?",
+        "Which room do you spend the most time in?"
+      ]
+    }
+  ]
+}
+
