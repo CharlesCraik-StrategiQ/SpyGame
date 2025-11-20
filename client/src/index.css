@@ -63,11 +63,12 @@ html {
     max-height: 100dvh;
     overflow: hidden;
     padding: 12px;
-    align-items: flex-start;
+    align-items: center;
   }
   
   .screen.game-screen {
     padding: 12px 12px 60px 12px;
+    align-items: center;
   }
 }
 
