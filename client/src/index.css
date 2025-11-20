@@ -13,6 +13,19 @@ body {
   overflow-x: hidden;
 }
 
+html {
+  overflow-x: hidden;
+}
+
+@media (max-width: 600px) {
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+  }
+}
+
 #root {
   height: 100dvh;
 }
@@ -24,6 +37,14 @@ body {
   justify-content: center;
   padding: 20px;
   position: relative;
+  overflow: hidden;
+}
+
+@media (max-width: 600px) {
+  .app {
+    padding: 0;
+    overflow: hidden;
+  }
 }
 
 .screen {
@@ -36,9 +57,17 @@ body {
 }
 
 @media (max-width: 600px) {
+  .screen {
+    height: 100dvh;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+    padding: 12px;
+    align-items: flex-start;
+  }
+  
   .screen.game-screen {
-    align-items: center;
-    padding: 10px 10px 60px 10px;
+    padding: 12px 12px 60px 12px;
   }
 }
 
@@ -46,6 +75,16 @@ body {
   width: 100%;
   max-width: 500px;
   margin: 0 auto;
+}
+
+@media (max-width: 600px) {
+  .container {
+    height: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 .terminal-header {
@@ -886,15 +925,9 @@ body {
     font-size: 8px;
   }
 
-  .screen {
-    padding: 15px;
-    min-height: 100vh;
-    align-items: center;
-  }
-
   .container {
     max-width: 100%;
-    margin-top: 15px;
+    margin-top: 0;
   }
 
   .location-grid {
@@ -908,12 +941,15 @@ body {
   }
 
   .terminal-box {
-    padding: 24px 16px;
+    padding: 20px 14px;
+    max-height: calc(100dvh - 140px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .role-display {
-    padding: 20px;
-    margin-bottom: 24px;
+    padding: 18px;
+    margin-bottom: 20px;
   }
 
   .role-title {
@@ -937,7 +973,7 @@ body {
   }
 
   .section {
-    margin: 22px 0;
+    margin: 18px 0;
   }
 
   .section-title {
@@ -949,6 +985,9 @@ body {
   .player-list,
   .questions-list {
     border: 1px solid #2a2a2a;
+    max-height: 140px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .player-item,
