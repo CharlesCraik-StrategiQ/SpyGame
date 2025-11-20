@@ -7,7 +7,11 @@ export function SocketProvider({ children }) {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    const newSocket = io('http://localhost:3001');
+    // Use environment variable in production, or auto-detect from current origin
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || 
+      (import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin);
+    
+    const newSocket = io(socketUrl);
     setSocket(newSocket);
 
     return () => newSocket.close();
