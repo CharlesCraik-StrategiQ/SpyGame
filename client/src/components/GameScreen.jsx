@@ -10,13 +10,13 @@ export default function GameScreen({
   location,
   questions,
   onRoomUpdate,
-  onRoleAssigned,
   onAccusationStarted,
   onVoteUpdate,
   onAccusationResult,
   onSpyGuessResult,
   onRoundEnd,
-  onShowSpyGuess
+  onShowSpyGuess,
+  finalVoteActive
 }) {
   const socket = useSocket();
   const [selectedAccuse, setSelectedAccuse] = useState('');
@@ -25,48 +25,61 @@ export default function GameScreen({
   useEffect(() => {
     if (!socket) return;
 
-    socket.on('room_update', (state) => {
+    const handleRoomUpdate = (state) => {
       onRoomUpdate(state);
-    });
+    };
 
-    socket.on('accusation_started', (data) => {
+    const handleAccusationStarted = (data) => {
+      if (finalVoteActive) return;
       setAccusationBanner(data);
       onAccusationStarted(data);
-    });
+    };
 
-    socket.on('vote_update', (data) => {
+    const handleVoteUpdate = (data) => {
       onVoteUpdate(data.votes, data.votesNeeded);
-    });
+    };
 
-    socket.on('accusation_result', (result) => {
+    const handleAccusationResult = (result) => {
       setAccusationBanner(null);
       onAccusationResult(result);
-    });
+    };
 
-    socket.on('spy_guess_result', (result) => {
+    const handleSpyGuessResult = (result) => {
       onSpyGuessResult(result);
-    });
+    };
 
-    socket.on('round_ended', () => {
+    const handleRoundEnded = () => {
       onRoundEnd();
-    });
+    };
 
-    socket.on('scores_reset', () => {
-    });
+    socket.on('room_update', handleRoomUpdate);
+    socket.on('accusation_started', handleAccusationStarted);
+    socket.on('vote_update', handleVoteUpdate);
+    socket.on('accusation_result', handleAccusationResult);
+    socket.on('spy_guess_result', handleSpyGuessResult);
+    socket.on('round_ended', handleRoundEnded);
 
     return () => {
-      socket.off('room_update');
-      socket.off('accusation_started');
-      socket.off('vote_update');
-      socket.off('accusation_result');
-      socket.off('spy_guess_result');
-      socket.off('round_ended');
-      socket.off('scores_reset');
+      socket.off('room_update', handleRoomUpdate);
+      socket.off('accusation_started', handleAccusationStarted);
+      socket.off('vote_update', handleVoteUpdate);
+      socket.off('accusation_result', handleAccusationResult);
+      socket.off('spy_guess_result', handleSpyGuessResult);
+      socket.off('round_ended', handleRoundEnded);
     };
-  }, [socket, onRoomUpdate, onAccusationStarted, onVoteUpdate, onAccusationResult, onSpyGuessResult, onRoundEnd]);
+  }, [
+    socket,
+    finalVoteActive,
+    onRoomUpdate,
+    onAccusationStarted,
+    onVoteUpdate,
+    onAccusationResult,
+    onSpyGuessResult,
+    onRoundEnd
+  ]);
 
   const handleAccuse = () => {
-    if (!selectedAccuse) return;
+    if (!selectedAccuse || finalVoteActive) return;
     
     socket.emit('accuse_player', {
       code: roomCode,
@@ -90,10 +103,15 @@ export default function GameScreen({
 
   const isHost = roomState?.hostId === playerId;
   const otherPlayers = roomState?.players.filter(p => p.id !== playerId) || [];
+  const accuseDisabled =
+    !selectedAccuse ||
+    roomState?.hasAccusation ||
+    roomState?.hasFinalVote ||
+    finalVoteActive;
 
   return (
     <div className="screen game-screen">
-      {accusationBanner && (
+      {accusationBanner && !finalVoteActive && (
         <div className="accusation-banner">
           <div className="accusation-banner-title">ACCUSATION IN PROGRESS</div>
           <div className="accusation-banner-text">
@@ -151,6 +169,7 @@ export default function GameScreen({
               value={selectedAccuse} 
               onChange={(e) => setSelectedAccuse(e.target.value)}
               className="select"
+              disabled={roomState?.hasFinalVote || finalVoteActive}
             >
               <option value="">Select player...</option>
               {otherPlayers.map(player => (
@@ -162,7 +181,7 @@ export default function GameScreen({
             <button 
               className="btn" 
               onClick={handleAccuse}
-              disabled={!selectedAccuse || roomState?.hasAccusation}
+              disabled={accuseDisabled}
             >
               ACCUSE
             </button>
@@ -188,4 +207,3 @@ export default function GameScreen({
     </div>
   );
 }
-

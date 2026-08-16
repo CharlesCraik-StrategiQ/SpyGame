@@ -55,10 +55,62 @@ export class GameManager {
       players: [],
       roundActive: false,
       currentLocation: null,
-      accusation: null
+      accusation: null,
+      settings: { timerEnabled: false, timerMinutes: 5 },
+      roundEndTime: null,
+      finalVote: null,
+      timerHandle: null
     };
     this.rooms.set(code, room);
     return room;
+  }
+
+  updateSettings(code, playerId, { timerEnabled, timerMinutes }) {
+    const room = this.rooms.get(code);
+    if (!room) {
+      return { success: false, error: 'Room not found' };
+    }
+
+    if (room.hostId !== playerId) {
+      return { success: false, error: 'Only host can update settings' };
+    }
+
+    if (room.roundActive) {
+      return { success: false, error: 'Cannot change settings during a round' };
+    }
+
+    const enabled = Boolean(timerEnabled);
+    let minutes = Number(timerMinutes);
+    if (!Number.isFinite(minutes)) {
+      minutes = room.settings.timerMinutes;
+    }
+    minutes = Math.max(1, Math.min(60, Math.round(minutes)));
+
+    room.settings = {
+      timerEnabled: enabled,
+      timerMinutes: minutes
+    };
+
+    return { success: true, settings: room.settings };
+  }
+
+  clearTimer(code) {
+    const room = this.rooms.get(code);
+    if (!room) return;
+    if (room.timerHandle) {
+      clearTimeout(room.timerHandle);
+      room.timerHandle = null;
+    }
+  }
+
+  scheduleTimer(code, ms, onExpire) {
+    const room = this.rooms.get(code);
+    if (!room) return;
+    this.clearTimer(code);
+    room.timerHandle = setTimeout(() => {
+      room.timerHandle = null;
+      onExpire();
+    }, ms);
   }
 
   joinRoom(code, playerId, playerName) {
@@ -108,6 +160,8 @@ export class GameManager {
       return { success: false, error: 'Need at least 3 players' };
     }
 
+    this.clearTimer(code);
+
     room.roundActive = true;
     
     // Pick a new location that's different from the previous one
@@ -119,13 +173,151 @@ export class GameManager {
     
     room.currentLocation = newLocation;
     room.accusation = null;
+    room.finalVote = null;
 
     const spyIndex = Math.floor(Math.random() * room.players.length);
     room.players.forEach((player, index) => {
       player.role = index === spyIndex ? 'spy' : 'location';
     });
 
-    return { success: true };
+    if (room.settings?.timerEnabled) {
+      const ms = room.settings.timerMinutes * 60 * 1000;
+      room.roundEndTime = Date.now() + ms;
+      return { success: true, timerEnabled: true, timerMs: ms, roundEndTime: room.roundEndTime };
+    }
+
+    room.roundEndTime = null;
+    return { success: true, timerEnabled: false };
+  }
+
+  startFinalVote(code) {
+    const room = this.rooms.get(code);
+    if (!room || !room.roundActive) {
+      return { success: false, error: 'No active round' };
+    }
+
+    if (room.accusation) {
+      return { success: false, error: 'Accusation already in progress' };
+    }
+
+    if (room.finalVote) {
+      return { success: false, error: 'Final vote already in progress' };
+    }
+
+    room.finalVote = {
+      nominations: {},
+      eligibleIds: room.players.map(p => p.id)
+    };
+    room.roundEndTime = null;
+
+    return {
+      success: true,
+      players: room.players.map(p => ({ id: p.id, name: p.name })),
+      votesNeeded: room.players.length
+    };
+  }
+
+  submitNomination(code, playerId, nominatedId) {
+    const room = this.rooms.get(code);
+    if (!room || !room.finalVote) {
+      return { success: false, error: 'No final vote in progress' };
+    }
+
+    if (!room.roundActive) {
+      return { success: false, error: 'No active round' };
+    }
+
+    if (room.accusation) {
+      return { success: false, error: 'Accusation already in progress' };
+    }
+
+    if (!room.finalVote.eligibleIds.includes(playerId)) {
+      return { success: false, error: 'Player not eligible' };
+    }
+
+    if (playerId === nominatedId) {
+      return { success: false, error: 'Cannot nominate yourself' };
+    }
+
+    const nominated = room.players.find(p => p.id === nominatedId);
+    if (!nominated) {
+      return { success: false, error: 'Nominated player not found' };
+    }
+
+    if (room.finalVote.nominations[playerId]) {
+      return { success: false, error: 'Already nominated' };
+    }
+
+    room.finalVote.nominations[playerId] = nominatedId;
+
+    const submitted = Object.keys(room.finalVote.nominations).length;
+    const votesNeeded = room.finalVote.eligibleIds.length;
+
+    if (submitted < votesNeeded) {
+      return {
+        success: true,
+        complete: false,
+        submitted,
+        votesNeeded
+      };
+    }
+
+    // Tally nominations and pick the top nominee (random tie-break)
+    const counts = {};
+    Object.values(room.finalVote.nominations).forEach(id => {
+      counts[id] = (counts[id] || 0) + 1;
+    });
+
+    let maxCount = 0;
+    let topIds = [];
+    for (const [id, count] of Object.entries(counts)) {
+      if (count > maxCount) {
+        maxCount = count;
+        topIds = [id];
+      } else if (count === maxCount) {
+        topIds.push(id);
+      }
+    }
+
+    const accusedId = topIds[Math.floor(Math.random() * topIds.length)];
+    const accused = room.players.find(p => p.id === accusedId);
+    const wasSpy = accused.role === 'spy';
+
+    room.finalVote = null;
+
+    if (wasSpy) {
+      room.players.forEach(player => {
+        if (player.role !== 'spy') {
+          player.score += 1;
+          this.scores[player.id] = player.score;
+        }
+      });
+    } else {
+      const spy = room.players.find(p => p.role === 'spy');
+      if (spy) {
+        spy.score += 1;
+        this.scores[spy.id] = spy.score;
+      }
+    }
+
+    this.clearTimer(code);
+    room.roundActive = false;
+    room.roundEndTime = null;
+
+    const scores = room.players.map(p => ({ id: p.id, name: p.name, score: p.score }));
+
+    return {
+      success: true,
+      complete: true,
+      forced: true,
+      agreed: true,
+      tied: false,
+      submitted,
+      votesNeeded,
+      accused: { id: accused.id, name: accused.name },
+      wasSpy,
+      scores
+    };
   }
 
   accusePlayer(code, accuserId, accusedId) {
@@ -138,12 +330,19 @@ export class GameManager {
       return { success: false, error: 'Accusation already in progress' };
     }
 
+    if (room.finalVote) {
+      return { success: false, error: 'Final vote already in progress' };
+    }
+
     const accuser = room.players.find(p => p.id === accuserId);
     const accused = room.players.find(p => p.id === accusedId);
 
     if (!accuser || !accused) {
       return { success: false, error: 'Player not found' };
     }
+
+    // Do not clear the round timer — if it expires during an accusation,
+    // the server will cancel the accusation and force a final nomination vote.
 
     room.accusation = {
       accuserId,
@@ -219,6 +418,10 @@ export class GameManager {
         room.roundActive = false;
       }
 
+      this.clearTimer(code);
+      room.roundEndTime = null;
+      room.finalVote = null;
+
       const result = {
         success: true,
         votes: room.accusation.votes,
@@ -271,7 +474,10 @@ export class GameManager {
     }
 
     const scores = room.players.map(p => ({ id: p.id, name: p.name, score: p.score }));
+    this.clearTimer(code);
     room.roundActive = false;
+    room.roundEndTime = null;
+    room.finalVote = null;
 
     return {
       success: true,
@@ -291,9 +497,12 @@ export class GameManager {
       return { success: false, error: 'Only host can end round' };
     }
 
+    this.clearTimer(code);
     room.roundActive = false;
     room.currentLocation = null;
     room.accusation = null;
+    room.finalVote = null;
+    room.roundEndTime = null;
     room.players.forEach(player => {
       player.role = null;
     });
@@ -346,7 +555,10 @@ export class GameManager {
         isHost: p.isHost
       })),
       roundActive: room.roundActive,
-      hasAccusation: !!room.accusation
+      hasAccusation: !!room.accusation,
+      hasFinalVote: !!room.finalVote,
+      settings: room.settings || { timerEnabled: false, timerMinutes: 5 },
+      roundEndTime: room.roundEndTime
     };
   }
 
@@ -365,6 +577,7 @@ export class GameManager {
     this.playerRoomMap.delete(playerId);
 
     if (room.players.length === 0) {
+      this.clearTimer(code);
       this.rooms.delete(code);
     } else if (room.hostId === playerId) {
       room.hostId = room.players[0].id;

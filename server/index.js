@@ -41,10 +41,21 @@ io.on('connection', (socket) => {
     const result = gameManager.joinRoom(code, socket.id, playerName);
     if (result.success) {
       socket.join(code);
-      io.to(code).emit('room_update', gameManager.getRoomState(code));
-      callback({ success: true, room: result.room });
+      const roomState = gameManager.getRoomState(code);
+      io.to(code).emit('room_update', roomState);
+      callback({ success: true, room: roomState });
     } else {
       callback({ success: false, error: result.error });
+    }
+  });
+
+  socket.on('update_host_settings', ({ code, timerEnabled, timerMinutes }, callback) => {
+    const result = gameManager.updateSettings(code, socket.id, { timerEnabled, timerMinutes });
+    if (result.success) {
+      io.to(code).emit('room_update', gameManager.getRoomState(code));
+      if (callback) callback({ success: true, settings: result.settings });
+    } else {
+      if (callback) callback({ success: false, error: result.error });
     }
   });
 
@@ -70,7 +81,61 @@ io.on('connection', (socket) => {
           });
         }
       });
+
+      if (result.timerEnabled && result.timerMs) {
+        console.log(`Scheduling round timer for room ${code}: ${result.timerMs}ms`);
+        gameManager.scheduleTimer(code, result.timerMs, () => {
+          console.log(`Round timer expired for room ${code}`);
+          const currentRoom = gameManager.rooms.get(code);
+          if (!currentRoom || !currentRoom.roundActive) {
+            console.log(`Skipping final vote (round not active)`);
+            return;
+          }
+          // Timer expiry always forces a nomination vote — clear any mid-round accusation
+          if (currentRoom.accusation) {
+            currentRoom.accusation = null;
+          }
+          if (currentRoom.finalVote) {
+            return;
+          }
+          const finalVoteResult = gameManager.startFinalVote(code);
+          if (finalVoteResult.success) {
+            io.to(code).emit('final_vote_started', {
+              players: finalVoteResult.players,
+              votesNeeded: finalVoteResult.votesNeeded
+            });
+            io.to(code).emit('room_update', gameManager.getRoomState(code));
+          }
+        });
+      }
       
+      if (callback) callback({ success: true });
+    } else {
+      if (callback) callback({ success: false, error: result.error });
+    }
+  });
+
+  socket.on('submit_nomination', ({ code, playerId, nominatedId }, callback) => {
+    const result = gameManager.submitNomination(code, playerId, nominatedId);
+    if (result.success) {
+      io.to(code).emit('final_vote_progress', {
+        submitted: result.submitted,
+        votesNeeded: result.votesNeeded
+      });
+
+      if (result.complete) {
+        io.to(code).emit('final_vote_result', {
+          forced: true,
+          agreed: result.agreed,
+          tied: result.tied,
+          accused: result.accused,
+          wasSpy: result.wasSpy,
+          scores: result.scores
+        });
+        gameManager.saveScores();
+        io.to(code).emit('room_update', gameManager.getRoomState(code));
+      }
+
       if (callback) callback({ success: true });
     } else {
       if (callback) callback({ success: false, error: result.error });
@@ -85,6 +150,7 @@ io.on('connection', (socket) => {
         accused: result.accused,
         votes: result.votes
       });
+      io.to(code).emit('room_update', gameManager.getRoomState(code));
       callback({ success: true });
     } else {
       callback({ success: false, error: result.error });

@@ -1,25 +1,25 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSocket } from '../SocketContext';
+import HostOptionsModal from './HostOptionsModal';
 
 export default function Lobby({ roomCode, playerId, roomState, onRoomUpdate, onRoundStart }) {
   const socket = useSocket();
+  const [showHostOptions, setShowHostOptions] = useState(false);
 
   useEffect(() => {
     if (!socket) return;
 
-    socket.on('room_update', (state) => {
+    const handleRoomUpdate = (state) => {
       onRoomUpdate(state);
-    });
+    };
 
-    socket.on('round_started', () => {
-      onRoundStart();
-    });
+    // App already listens for round_started; Lobby only needs room_update
+    socket.on('room_update', handleRoomUpdate);
 
     return () => {
-      socket.off('room_update');
-      socket.off('round_started');
+      socket.off('room_update', handleRoomUpdate);
     };
-  }, [socket, onRoomUpdate, onRoundStart]);
+  }, [socket, onRoomUpdate]);
 
   const handleStartRound = () => {
     socket.emit('start_round', { code: roomCode }, (response) => {
@@ -39,6 +39,10 @@ export default function Lobby({ roomCode, playerId, roomState, onRoomUpdate, onR
 
   const isHost = roomState?.hostId === playerId;
   const canStart = roomState?.players.length >= 3;
+  const settings = roomState?.settings;
+  const timerStatus = settings?.timerEnabled
+    ? `Round Timer: ${settings.timerMinutes} min`
+    : 'Round Timer: Off';
 
   return (
     <div className="screen">
@@ -49,6 +53,8 @@ export default function Lobby({ roomCode, playerId, roomState, onRoomUpdate, onR
             ROOM CODE<br/>
             <span className="highlight">{roomCode}</span>
           </div>
+
+          <div className="info timer-status">{timerStatus}</div>
           
           <div className="section">
             <div className="section-title">PLAYERS ({roomState?.players.length || 0})</div>
@@ -75,6 +81,9 @@ export default function Lobby({ roomCode, playerId, roomState, onRoomUpdate, onR
               {!canStart && (
                 <div className="info">Need at least 3 players</div>
               )}
+              <button className="btn btn-secondary" onClick={() => setShowHostOptions(true)}>
+                HOST OPTIONS
+              </button>
               <button className="btn btn-secondary" onClick={handleResetScores}>
                 RESET SCORES
               </button>
@@ -86,7 +95,14 @@ export default function Lobby({ roomCode, playerId, roomState, onRoomUpdate, onR
           )}
         </div>
       </div>
+
+      {showHostOptions && (
+        <HostOptionsModal
+          roomCode={roomCode}
+          settings={settings}
+          onClose={() => setShowHostOptions(false)}
+        />
+      )}
     </div>
   );
 }
-

@@ -32,21 +32,10 @@ export default function AccusationResultModal({ result, onClose, isHost, roomCod
       <div className="modal">
         <div className="terminal-header">ROUND COMPLETE</div>
         <div className="terminal-box">
-          <div className="result-message">
-            Vote Results: {result.agreeCount || 0} Agree / {result.rejectCount || 0} Reject
-          </div>
-          
-          {result.tied ? (
+          {result.forced ? (
             <>
               <div className="result-message">
-                Vote tied - {result.accused.name} stays
-              </div>
-              <div className="info">No points awarded</div>
-            </>
-          ) : result.agreed ? (
-            <>
-              <div className="result-message">
-                {result.accused.name} was voted out
+                Most nominated: {result.accused.name}
               </div>
               <div className={`result-reveal ${result.wasSpy ? 'spy' : ''}`}>
                 {result.wasSpy ? (
@@ -59,22 +48,50 @@ export default function AccusationResultModal({ result, onClose, isHost, roomCod
                 <div className="info">All non-spies gain +1 point</div>
               )}
               {!result.wasSpy && (
-                <div className="info">Wrong player accused - Spy gains +1 point</div>
+                <div className="info">Wrong player selected - Spy gains +1 point</div>
               )}
             </>
           ) : (
             <>
               <div className="result-message">
-                Vote rejected - {result.accused.name} stays
+                Vote Results: {result.agreeCount || 0} Agree / {result.rejectCount || 0} Reject
               </div>
-              <div className="info">Spy gains +1 point</div>
+              
+              {result.tied ? (
+                <>
+                  <div className="result-message">
+                    Vote tied - {result.accused.name} stays
+                  </div>
+                  <div className="info">No points awarded</div>
+                </>
+              ) : result.agreed ? (
+                <>
+                  <div className="result-message">
+                    {result.accused.name} was voted out
+                  </div>
+                  <div className={`result-reveal ${result.wasSpy ? 'spy' : ''}`}>
+                    {result.wasSpy ? (
+                      <>THEY WERE THE SPY!</>
+                    ) : (
+                      <>THEY WERE NOT THE SPY</>
+                    )}
+                  </div>
+                  {result.wasSpy && (
+                    <div className="info">All non-spies gain +1 point</div>
+                  )}
+                  {!result.wasSpy && (
+                    <div className="info">Wrong player accused - Spy gains +1 point</div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="result-message">
+                    Vote rejected - {result.accused.name} stays
+                  </div>
+                  <div className="info">Spy gains +1 point</div>
+                </>
+              )}
             </>
-          )}
-          
-          {!isHost && (
-            <div className="info" style={{ marginTop: '20px' }}>
-              Waiting for host to start next round
-            </div>
           )}
           
           {!isHost && (
@@ -95,4 +112,3 @@ export default function AccusationResultModal({ result, onClose, isHost, roomCod
     </div>
   );
 }
-
